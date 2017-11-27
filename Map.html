@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<style>
+			#map {
+				height: 600px;
+				width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+		<h3>Weather Map</h3>
+		<p id="message"></p>
+		<div id="map"></div>
+		<script>
+			function getWeatherCoordinates() {
+				var xmlhttp = new XMLHttpRequest();
+				var url = 'http://localhost:5000/api/weather'
+				xmlhttp.onreadystatechange = function() {
+					if (this.readyState == 4 && this.status == 200) {
+						weatherData = JSON.parse(this.responseText);
+						initMap(weatherData);
+					}
+				}
+				xmlhttp.open('GET', url, true);
+				xmlhttp.send();
+			}
+
+			function initMap(weatherData) {
+				if (weatherData == null || weatherData.errorCode) {
+					document.getElementById('message').innerHTML = 'No data to show';
+					return;
+				}
+
+    			var map = new google.maps.Map(document.getElementById('map'), {
+      				zoom: 15,
+      				center: getMapCenter()
+    			});
+
+				weatherData.forEach(data => {
+					const title = "Temperature: " + data.temperature +
+						"<br>Humidity: " + data.humidity +
+						"<br>Noiselevel: " + data.noiselevel +
+						"<br>CO2 level: " + data.co2level;
+
+					var infowindow = new google.maps.InfoWindow({
+						content: title
+					});
+
+					const point = { lat: data.latitude, lng: data.longitude };
+
+					var marker = new google.maps.Marker({
+          				position: point,
+          				map: map,
+	        			title: title
+    				});
+
+    				google.maps.event.addListener(marker, 'click', function() {
+					  infowindow.open(map,marker);
+					});
+				});	
+  			}
+
+  			function getMapCenter() {
+  				const numberOfPoint = weatherData.length;
+  				var sumLat = 0;
+  				var sumLng = 0;
+
+  				weatherData.forEach(data => {
+  					const point = { lat: data.latitude, lng: data.longitude };
+  					sumLat += point.lat;
+  					sumLng += point.lng;
+  				});
+
+  				return { lat: sumLat / numberOfPoint, lng: sumLng / numberOfPoint };
+  			}
+
+    		</script>
+    		<script async defer
+    			src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDB46JaQV8N9AC4Iv7eGKINXRjwcJw-kpo&callback=getWeatherCoordinates">
+    		</script>
+  	</body>
+</html>
