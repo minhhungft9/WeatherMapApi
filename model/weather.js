@@ -20,10 +20,7 @@ var weatherSchema = mongoose.Schema({
   humidity: {
     type: Number
   },
-  noiselevel: {
-    type: Number
-  },
-  co2level: {
+  lightLevel: {
     type: Number
   },
   latitude: {
@@ -40,6 +37,7 @@ var weatherSchema = mongoose.Schema({
 var Weather = module.exports = mongoose.model('Weather', weatherSchema);
 
 // Get weather data
+// MONGO DB
 module.exports.getWeatherData = function(callback) {
   Weather.find(callback);
 }
@@ -48,10 +46,13 @@ module.exports.createWeatherData = function(weather, callback) {
   Weather.create(Object.assign({}, weather, { createdAt: new Date() }), callback);
 }
 
+// FIREBASE
 module.exports.getData = function(callbackSucess, callbackError) {
   ref.once('value', callbackSucess, callbackError);
 }
 
 module.exports.createData = function(weather, callback) {
-  ref.set(weather, callback);
+  const currentDateString = (new Date()).toString();
+  const weatherWithCreatedAt = Object.assign({}, weather, { createdAt: currentDateString });
+  ref.push(weatherWithCreatedAt, callback);
 }

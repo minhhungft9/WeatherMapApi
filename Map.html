@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 	<head>
@@ -15,11 +16,13 @@
 		<script>
 			function getWeatherCoordinates() {
 				var xmlhttp = new XMLHttpRequest();
-				var url = 'http://localhost:5000/api/weather'
+				var url = 'https://weathermap-api.herokuapp.com/v2/weather'
 				xmlhttp.onreadystatechange = function() {
 					if (this.readyState == 4 && this.status == 200) {
 						weatherData = JSON.parse(this.responseText);
-						initMap(weatherData);
+						const weatherDataArray = convertReceivedJsonToArray(weatherData);
+						console.log(weatherDataArray);
+						initMap(weatherDataArray);
 					}
 				}
 				xmlhttp.open('GET', url, true);
@@ -27,21 +30,22 @@
 			}
 
 			function initMap(weatherData) {
-				if (weatherData == null || weatherData.errorCode) {
+				if (weatherData == null || weatherData.errorCode || weatherData.length === 0) {
 					document.getElementById('message').innerHTML = 'No data to show';
 					return;
 				}
 
     			var map = new google.maps.Map(document.getElementById('map'), {
       				zoom: 15,
-      				center: getMapCenter()
+      				center: getMapCenter(weatherData)
     			});
 
 				weatherData.forEach(data => {
 					const title = "Temperature: " + data.temperature +
 						"<br>Humidity: " + data.humidity +
 						"<br>Noiselevel: " + data.noiselevel +
-						"<br>CO2 level: " + data.co2level;
+						"<br>CO2 level: " + data.co2level +
+						"<br>Light: " + data.light;
 
 					var infowindow = new google.maps.InfoWindow({
 						content: title
@@ -61,7 +65,7 @@
 				});	
   			}
 
-  			function getMapCenter() {
+  			function getMapCenter(weatherData) {
   				const numberOfPoint = weatherData.length;
   				var sumLat = 0;
   				var sumLng = 0;
@@ -73,6 +77,16 @@
   				});
 
   				return { lat: sumLat / numberOfPoint, lng: sumLng / numberOfPoint };
+  			}
+
+  			function convertReceivedJsonToArray(weatherDataObject) {
+  				console.log(weatherDataObject);
+  				var weatherDataArray = [];
+  				for(var itemKey in weatherDataObject) {
+  					if (weatherDataObject.hasOwnProperty(itemKey))
+  						weatherDataArray.push(weatherDataObject[itemKey]);
+  				}
+  				return weatherDataArray;
   			}
 
     		</script>

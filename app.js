@@ -11,12 +11,12 @@ var HttpStatus = require('http-status-codes');
 var _ = require('lodash');
 
 //Connect to Mongoose
-mongoose.connect('mongodb://localhost/weathermapping', { useMongoClient: true, promiseLibrary: global.Promise });
-var db = mongoose.connection;
-db.on('error', console.error.bind(console, 'connection error:'));
-db.once('open', function() {
-  console.log('Connected to mongodb');
-});
+// mongoose.connect('mongodb://localhost/weathermapping', { useMongoClient: true, promiseLibrary: global.Promise });
+// var db = mongoose.connection;
+// db.on('error', console.error.bind(console, 'connection error:'));
+// db.once('open', function() {
+//   console.log('Connected to mongodb');
+// });
 
 //Models
 Weather = require('./model/weather');
@@ -26,48 +26,57 @@ app.get('/', function(req, res) {
 });
 
 // Get weather data
-app.get('/api/weather', function(req, res) {
-  Weather.getWeatherData(function(err, weather) {
-    const filteredWeather = weather.filter(weather => {
-      const createdAt = new Date(weather.createdAt);
-      console.log(new Date().setHours(0,0,0,0));
-      console.log(new Date(new Date() - 1) > new Date());
-      return createdAt.setHours(0,0,0,0) >= (new Date(new Date() - 1)).setHours(0,0,0,0);
-    });
+// app.get('/api/weather', function(req, res) {
+//   Weather.getWeatherData(function(err, weather) {
+//     const filteredWeather = weather.filter(weather => {
+//       const createdAt = new Date(weather.createdAt);
+//       console.log(new Date().setHours(0,0,0,0));
+//       console.log(new Date(new Date() - 1) > new Date());
+//       return createdAt.setHours(0,0,0,0) >= (new Date(new Date() - 1)).setHours(0,0,0,0);
+//     });
 
-    console.log(filteredWeather);
+//     console.log(filteredWeather);
 
-    if (err)
-      throw err;
-    if (_.isEmpty(weather)) {
-      res.set('Access-Control-Allow-Origin', '*');
-      res.json({ errorCode: 'data-not-found' });
-    }
-    else {
-      res.set('Access-Control-Allow-Origin', '*');
-      res.json(filteredWeather);
-    }
-  });
-});
+//     if (err)
+//       throw err;
+//     if (_.isEmpty(filteredWeather)) {
+//       res.set('Access-Control-Allow-Origin', '*');
+//       res.json({ errorCode: 'data-not-found' });
+//     }
+//     else {
+//       res.set('Access-Control-Allow-Origin', '*');
+//       res.json(filteredWeather);
+//     }
+//   });
+// });
 
-app.post('/api/add', function(req, res) {
-  var weather = req.body;
-  Weather.createWeatherData(weather, function(err, weather) {
-    if (err)
-      throw err;  
-    res.json(weather);
-  });
-});
+// app.post('/api/add', function(req, res) {
+//   var weather = req.body;
+//   Weather.createWeatherData(weather, function(err, weather) {
+//     if (err)
+//       throw err;  
+//     res.json(weather);
+//   });
+// });
 
 app.get('/v2/weather', function(req, res) {
+  res.set('Access-Control-Allow-Origin', '*');  
   Weather.getData(function(snap) {
-    res.send(snap.val() ? snap.val() : {});
+    const weather = convertObjectToArray(snap.val());
+    const filteredWeather = weather.filter(weather => {
+      const createdAt = new Date(weather.createdAt);
+      console.log(weather);
+      return createdAt.setHours(0,0,0,0) >= (new Date(new Date() - 1)).setHours(0,0,0,0);
+    });
+    
+    res.json(filteredWeather ? filteredWeather : []);
   }, function(error) {
     console.log(error);
   });
 });
 
 app.post('/v2/weather', function(req, res) {
+  res.set('Access-Control-Allow-Origin', '*');  
   Weather.createData(req.body, function(error) {
     if (!error) {
       res.json(req.body);
@@ -79,3 +88,14 @@ app.post('/v2/weather', function(req, res) {
 app.listen(app.get('port'), function() {
   console.log('Listening on port: ', app.get('port'));
 });
+
+function convertObjectToArray(object) {
+  let array = [];
+  for (var key in object) {
+    if (object.hasOwnProperty(key)) {
+      object[key]['id'] = key
+      array.push(object[key]);
+    }
+  }
+  return array;
+}
