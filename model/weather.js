@@ -36,16 +36,6 @@ var weatherSchema = mongoose.Schema({
 
 var Weather = module.exports = mongoose.model('Weather', weatherSchema);
 
-// Get weather data
-// MONGO DB
-module.exports.getWeatherData = function(callback) {
-  Weather.find(callback);
-}
-
-module.exports.createWeatherData = function(weather, callback) {
-  Weather.create(Object.assign({}, weather, { createdAt: new Date() }), callback);
-}
-
 // FIREBASE
 module.exports.getData = function(callbackSucess, callbackError) {
   ref.once('value', callbackSucess, callbackError);
